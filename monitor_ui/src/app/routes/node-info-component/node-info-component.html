@@ -1,0 +1,70 @@
+@if (loading()) {
+  <div class="d-flex justify-content-center">
+    <div class="spinner-border" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+  </div>
+} @else if (error()) {
+  <app-error-site-component></app-error-site-component>
+} @else {
+
+  <h3 class="mb-3">Node Info</h3>
+  <div class="d-flex align-items-center justify-content-end px-3 mb-3">
+    <div class="form-check form-switch me-4">
+      <input class="form-check-input" type="checkbox" role="switch" id="showTable"
+             [checked]="showTable()"
+             (change)="toggleTable()">
+      <label class="form-check-label" for="showTable">Metrics Table</label>
+    </div>
+
+    @if (nodeStatus() != null) {
+      <span class="status-circle me-2" [ngClass]="nodeStatus()?.STATUS"></span>
+      <span>({{nodeStatus()?.CPU}}% / {{nodeStatus()?.MEM}}%)</span>
+    } @else {
+      <span class="status-circle UNKNOWN"></span>
+      <span>---/---</span>
+    }
+  </div>
+  <div class="mb-4">
+    <div class="row flex-wrap">
+      <div class="col">
+        <span>Url:</span>
+        <span>{{ nodeInfo.url }}</span>
+      </div>
+      <div class="col">
+        <span>Type:</span>
+        <span>{{ nodeInfo.type }}</span>
+      </div>
+
+      @if (nodeInfo.type == 'Processing') {
+        <div class="col">
+          <span>Query:</span>
+          <span>{{ nodeInfo.query }}</span>
+        </div>
+      }
+
+      @if (nodeInfo.forward_urls.length != 0 && nodeInfo.type != 'Sink') {
+        <div class="col">
+          <span>Forward Urls:</span>
+          <div class="d-block">
+            @for (url of nodeInfo.forward_urls; track $index) {
+              <span>{{ url }}</span>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+
+  @if (metricSub$ | async; as metrics) {
+
+    <app-metrics-graph-component [metrics]="metrics">
+    </app-metrics-graph-component>
+
+    @if(showTable()) {
+      <app-metrics-table-component [metrics]="metrics">
+      </app-metrics-table-component>
+    }
+  }
+
+}

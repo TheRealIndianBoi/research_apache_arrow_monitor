@@ -1,0 +1,76 @@
+@if (loading()) {
+  <div class="d-flex justify-content-center">
+    <div class="spinner-border" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+  </div>
+} @else if (error()) {
+  <app-error-site-component></app-error-site-component>
+} @else {
+
+  <h3 class="mb-3">All registered Nodes:</h3>
+  <div class="d-flex justify-content-end mb-3 mx-3">
+    <button class="btn btn-secondary" (click)="loadNodes()">
+      <svg width="18px" height="18px">
+        <use href="reload.svg#reload" />
+      </svg>
+      Refresh
+    </button>
+  </div>
+
+
+  <table class="table table-striped table-bordered text-center">
+    <thead>
+    <tr>
+      <th>URL</th>
+      <th>Type</th>
+      <th>Status (CPU/MEM)</th>
+      <th>Forward Urls</th>
+      <th>Query</th>
+      <th>Action</th>
+    </tr>
+    </thead>
+
+    <tbody class="py-3">
+      @if (nodes.length > 0) {
+        @for (node of nodes; track $index) {
+          <tr class="py-1">
+            <td>{{ node.url }}</td>
+            <td>{{ node.type }}</td>
+            <td>
+              @if (nodesStatus()[node.url] != null) {
+                <span class="status-circle" [ngClass]="nodesStatus()[node.url].STATUS"></span>
+                <span>({{nodesStatus()[node.url]?.CPU}}% / {{nodesStatus()[node.url]?.MEM}}%)</span>
+              } @else {
+
+                <span class="status-circle UNKNOWN"></span>
+                <span>---/---</span>
+              }
+            </td>
+            <td>
+              @if (node.forward_urls.length != 0){
+                @for (forward of node.forward_urls; track $index) {
+                  <a [routerLink]="['nodes', forward]">{{ forward }}</a>
+                }
+              } @else {
+                <span>---</span>
+              }
+            </td>
+            <td>{{ node.query || "---"}}</td>
+            <td>
+                <a class="btn btn-sm btn-primary" [routerLink]="[node.url]">
+                  <svg width="18px" height="18px">
+                    <use href="settings.svg#setting"/>
+                  </svg>
+                </a>
+            </td>
+          </tr>
+        }
+      } @else {
+        <tr class="py-1">
+          <td colspan="6" class="text-center">No Nodes registered yet.</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+}

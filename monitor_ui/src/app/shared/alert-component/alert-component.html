@@ -1,0 +1,14 @@
+<div class="position-fixed top-0 end-0 p-3 z-1">
+  @for (alert of alerts(); track $index) {
+    <div class="alert fade show" role="alert"
+         [ngClass]="{
+           'alert-danger': alert.type === 'error',
+           'alert-success': alert.type === 'success',
+           'alert-info': alert.type === 'info',
+           'alert-warning': alert.type === 'warning'
+         }">
+      {{ alert.text }}
+      <button type="button" class="btn-close" (click)="close(alert)" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  }
+</div>

@@ -1,0 +1,5 @@
+datafusion==46.0.0
+pyarrow==23.0.1
+
+fastapi
+uvicorn

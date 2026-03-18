@@ -1,0 +1,36 @@
+th, td {
+  padding: 8px 4px;
+  vertical-align: middle;
+}
+
+.status-circle {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 6px;
+
+  &.OK {
+    background-color: #28a745;
+    box-shadow: 0 0 4px #28a74580;
+  }
+
+  &.WARNING {
+    background-color: #ffc107;
+    box-shadow: 0 0 4px #ffc10780;
+  }
+
+  &.CRITICAL {
+    background-color: #dd3b09;
+    box-shadow: 0 0 4px rgba(255, 94, 7, 0.5);
+  }
+
+  &.ERROR {
+    background-color: #dc3545;
+    box-shadow: 0 0 4px #dc354580;
+  }
+  &.UNKNOWN {
+    background-color: #a6a6a6;
+    box-shadow: 0 0 4px rgba(213, 213, 213, 0.5);
+  }
+}

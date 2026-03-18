@@ -1,0 +1,28 @@
+.graph-card {
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.graph-card {
+  position: relative; /* Wichtig für Chart.js */
+  height: 300px;      /* Oder 100%, falls der Parent eine Höhe hat */
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+canvas {
+  flex-grow: 1;       /* Nimmt den restlichen Platz in der Card ein */
+  display: block;     /* Verhindert Inline-Spacing-Probleme */
+}
+
+.graph-title {
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.graph-canvas {
+  height: 260px;
+}

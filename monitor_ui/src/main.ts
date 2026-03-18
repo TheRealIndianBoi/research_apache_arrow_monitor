@@ -1,0 +1,9 @@
+import { bootstrapApplication } from '@angular/platform-browser';
+import { appConfig } from './app/app.config';
+import { App } from './app/app';
+
+import 'chartjs-adapter-date-fns';
+import { de } from 'date-fns/locale';
+
+bootstrapApplication(App, appConfig)
+  .catch((err) => console.error(err));

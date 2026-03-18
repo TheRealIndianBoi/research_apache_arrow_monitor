@@ -1,0 +1,35 @@
+@if (metrics().length === 0) {
+  <p>Keine Metriken vorhanden.</p>
+} @else {
+  <table class="my-5 table table-striped table-bordered">
+    <thead>
+    <tr>
+      <th>timestamp</th>
+      <th>address</th>
+      <th>type</th>
+      <th>total_duration_ns</th>
+      <th>avg_duration_ns</th>
+      <th>total_bytes</th>
+      <th>avg_bytes</th>
+      <th>count</th>
+      <th>avg_bandwidth</th>
+    </tr>
+    </thead>
+
+    <tbody>
+      @for (m of metrics(); track $index) {
+        <tr>
+          <td>{{ m.timestamp }}</td>
+          <td>{{ m.address }}</td>
+          <td>{{ m.type }}</td>
+          <td>{{ m.total_duration_ns }}</td>
+          <td>{{ m.avg_duration_ns }}</td>
+          <td>{{ m.total_bytes }}</td>
+          <td>{{ m.avg_bytes }}</td>
+          <td>{{ m.count }}</td>
+          <td>{{ m.avg_bandwidth }}</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+}

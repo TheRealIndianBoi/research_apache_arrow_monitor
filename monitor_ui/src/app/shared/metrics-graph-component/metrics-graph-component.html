@@ -1,0 +1,87 @@
+@if (groupedByType().length === 0) {
+  <div class="d-flex justify-content-center">
+    <p>Keine Graphik möglich. Es wurden keine Daten gefunden.</p>
+  </div>
+} @else {
+  <div class="row flex-wrap px-4 gx-4 gy-3 mb-3">
+    @for (groupByType of groupedByType(); track groupByType.type) {
+      <div class="col-6 d-block text-center">
+        <h5>Graph: {{groupByType.type}}</h5>
+        <app-type-graph-component
+          [type]="groupByType.type"
+          [field]="selectedField()"
+          [values]="groupByType.value">
+        </app-type-graph-component>
+      </div>
+    }
+  </div>
+  <div class="row flex-wrap gx-5 gy-2 px-4 mb-5">
+
+    <div class="form-check col">
+      <input
+        class="form-check-input"
+        type="radio"
+        name="metric"
+        id="bandwidth"
+        [checked]="selectedField() === 'avg_bandwidth'"
+        (change)="setField('avg_bandwidth')">
+      <label class="form-check-label" for="bandwidth">Bandwidth</label>
+    </div>
+
+    <div class="form-check col">
+      <input
+        class="form-check-input"
+        type="radio"
+        name="metric"
+        id="total_duration"
+        [checked]="selectedField() === 'total_duration_ns'"
+        (change)="setField('total_duration_ns')">
+      <label class="form-check-label" for="total_duration">Total Duration</label>
+    </div>
+
+    <div class="form-check col">
+      <input
+        class="form-check-input"
+        type="radio"
+        name="metric"
+        id="avg_duration"
+        [checked]="selectedField() === 'avg_duration_ns'"
+        (change)="setField('avg_duration_ns')">
+      <label class="form-check-label" for="avg_duration">Avg. Duration</label>
+    </div>
+
+    <div class="form-check col">
+      <input
+        class="form-check-input"
+        type="radio"
+        name="metric"
+        id="total_bytes"
+        [checked]="selectedField() === 'total_bytes'"
+        (change)="setField('total_bytes')">
+      <label class="form-check-label" for="total_bytes">Total Bytes</label>
+    </div>
+
+    <div class="form-check col">
+      <input
+        class="form-check-input"
+        type="radio"
+        name="metric"
+        id="avg_bytes"
+        [checked]="selectedField() === 'avg_bytes'"
+        (change)="setField('avg_bytes')">
+      <label class="form-check-label" for="avg_bytes">Avg. Bytes</label>
+    </div>
+
+    <div class="form-check col">
+      <input
+        class="form-check-input"
+        type="radio"
+        name="metric"
+        id="count"
+        [checked]="selectedField() === 'count'"
+        (change)="setField('count')">
+      <label class="form-check-label" for="count">Count</label>
+    </div>
+
+  </div>
+}
