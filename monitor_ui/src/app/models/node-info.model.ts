@@ -15,6 +15,7 @@ export interface NodeHealthStatus {
 
 export enum NodeMetricType {
   GENERATE = "GENERATE",
+  RECEIVE = "RECEIVE",
   SEND = "SEND",
   PROCESS = "PROCESS",
   WRITE = "WRITE",
@@ -28,8 +29,8 @@ export interface NodeMetric {
   avg_bytes: number;
   count: number;
   avg_bandwidth: number;
-  address: string;
-  type: NodeMetricType;
+  client_url: string;
+  metric_type: NodeMetricType;
 }
 
 export interface ChartPoint {
@@ -48,12 +49,12 @@ export interface MetricGroup {
   avg_bandwidth: number;
 }
 export interface MetricGroupByAddress {
-  address: string;
+  client_url: string;
   value: MetricGroup[];
 }
 
 export interface MetricGroupByType {
-  type: NodeMetricType;
+  metric_type: NodeMetricType;
   value: MetricGroupByAddress[];
 }
 

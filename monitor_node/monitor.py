@@ -19,7 +19,7 @@ from modules.Logger import Logger
 from schema.health import HealthResult, HealthStatus
 from schema.metrics import RAW_METRIC_SCHEMA
 from schema.nodes import NodeInfo, NodeType
-from schema.logs import LogType
+from schema.logs import LogType, LogObject
 
 
 # ==========================
@@ -27,13 +27,16 @@ from schema.logs import LogType
 # ==========================
 
 class MonitorNode(pf.FlightServerBase):
-    def __init__(self, location, poll_interval: int, max_window: int):
+    def __init__(self, location, poll_interval: int, max_window: int, max_log_size: int):
         super().__init__(location)
+        self.metrics_lock = threading.Lock()
+        self.logs_lock = threading.Lock()
         self.nodes: dict[str, NodeInfo] = {}
-        self.lock = threading.Lock()
         self.poll_interval = poll_interval  # seconds
         self.window_size = max_window
+        self.max_log_size = max_log_size
         self.agg_metrics: dict[str, deque[pa.RecordBatch]] = {}
+        self.logs: dict[str, deque[str]] = {}
         self.poll_metrics_thread = threading.Thread(target=self.poll_metrics, args=(), daemon=True)
         self.poll_metrics_thread.start()
         self.poll_logs_thread = threading.Thread(target=self.poll_logs, args=(), daemon=True)
@@ -55,11 +58,12 @@ class MonitorNode(pf.FlightServerBase):
             node_type: NodeType = data.get("type")
             query: str = data.get("query", "")
 
-            with self.lock:
+            with self.metrics_lock:
                 if node_url not in self.nodes:
                     logger.log(f"Registering new client for {node_url}", LogType.INFO)
                     self.nodes[node_url] = NodeInfo(node_url, node_type, forward_urls, query)
                     self.agg_metrics[node_url] = deque(maxlen=self.window_size)
+                    self.logs[node_url] = deque(maxlen=self.max_log_size)
                 else:
                     node = self.nodes[node_url]
                     node.forward_urls = forward_urls
@@ -70,17 +74,19 @@ class MonitorNode(pf.FlightServerBase):
 
         elif action.type == "disconnect":
             node_url = action.body.to_pybytes().decode("utf-8")
-            with self.lock:
+            with self.metrics_lock:
                 if node_url in self.nodes:
                     del self.nodes[node_url]
                     self.agg_metrics[node_url].clear()
                     del self.agg_metrics[node_url]
+                    self.logs[node_url].clear()
+                    del self.logs[node_url]
                     logger.log(f"Disconnected node {node_url}", LogType.INFO)
             yield pf.Result(b"Disconnected")
 
     def poll_logs(self):
         while True:
-            with self.lock:
+            with self.logs_lock:
                 nodes_copy = list(self.nodes.items())
 
             for url, node_info in nodes_copy:
@@ -89,7 +95,8 @@ class MonitorNode(pf.FlightServerBase):
                     res = next(client.do_action(pf.Action("logs", b"")), None)
                     if res is None: continue
                     payload = json.loads(res.body.to_pybytes().decode("utf-8"))
-                    logger.log(f"Poll Logs: {url}: {payload}", LogType.DEBUG)
+                    if len(payload) > 0:
+                        self.logs[url].append(payload)
 
                 except Exception as e:
                     logger.log(f"[MonitorNode] Failed to poll logs from {url}: {e}", LogType.ERROR)
@@ -98,7 +105,7 @@ class MonitorNode(pf.FlightServerBase):
 
     def poll_metrics(self):
         while True:
-            with self.lock:
+            with self.metrics_lock:
                 nodes_copy = list(self.nodes.items())
 
             for url, node_info in nodes_copy:
@@ -121,9 +128,8 @@ class MonitorNode(pf.FlightServerBase):
             time.sleep(self.poll_interval)
 
     def api_get_metrics(self, node_url: str):
-        with self.lock:
+        with self.metrics_lock:
             metrics = self.agg_metrics.get(node_url)
-            print(metrics is not None)
             if metrics is None:
                 return None
             batches = list(metrics)
@@ -133,6 +139,13 @@ class MonitorNode(pf.FlightServerBase):
         table = pa.Table.from_batches(batches)
         data = table.to_pylist()
         return data
+
+
+    def api_get_logs(self, node_url: str):
+        with self.logs_lock:
+            logs = self.logs.get(node_url)
+        return logs
+
 
     def check_health_client(self, client: pf.FlightClient) -> HealthResult:
         try:
@@ -169,7 +182,7 @@ class MonitorNode(pf.FlightServerBase):
 
     def aggregate_metrics(self, batch: pa.RecordBatch, host_url: str):
         t: pa.Table = pa.Table.from_batches([batch])
-        grouped: pa.Table = t.group_by(["address", "type"]).aggregate([
+        grouped: pa.Table = t.group_by(["client_url", "metric_type"]).aggregate([
             ("duration_ns", "sum"),
             ("duration_ns", "mean"),
             ("bytes", "sum"),
@@ -192,8 +205,8 @@ class MonitorNode(pf.FlightServerBase):
                 ],
                 names=[
                     "timestamp",
-                    "address",
-                    "type",
+                    "client_url",
+                    "metric_type",
                     "total_duration_ns",
                     "avg_duration_ns",
                     "total_bytes",
@@ -220,7 +233,7 @@ class MonitorNode(pf.FlightServerBase):
 
         result: pa.Table = (grouped.add_column(0, "timestamp", ts_array).append_column("avg_bandwidth", avg_bandwidth)
                             .rename_columns(
-            ["timestamp", "address", "type", "total_duration_ns", "avg_duration_ns", "total_bytes", "avg_bytes",
+            ["timestamp", "client_url", "metric_type", "total_duration_ns", "avg_duration_ns", "total_bytes", "avg_bytes",
              "count", "avg_bandwidth"]))
 
         self.agg_metrics[host_url].append(result.to_batches()[0])
@@ -290,6 +303,15 @@ def get_metrics(node: str):
     else:
         return result
 
+@app.get("/nodes/{node}/logs")
+def get_metrics(node: str):
+    result = monitor.api_get_logs(node)
+
+    if result is None:
+        raise HTTPException(status_code=404, detail=f"Node {node} not found")
+    else:
+        return result
+
 # ==========================
 # Main Thread
 # ==========================
@@ -329,6 +351,7 @@ def parse_arguments():
     parser.add_argument(
         "--log-print-level", type=LogType, default=LogType.DEBUG, help="Log level"
     )
+    parser.add_argument("--max-log-size", type=int, default=100, help="Max Log Size")
 
     args = parser.parse_args()
 
@@ -338,6 +361,7 @@ def parse_arguments():
     print(f" Poll Interval      : {args.poll_interval}")
     print(f" Max Window         : {args.max_window}")
     print(f" Log Level          : [{args.log_save_level}/{args.log_print_level}]")
+    print(f" Max Log Size       : {args.max_log_size}")
     print("=" * 40)
     print(f" Flight gRPC Server : grpc://0.0.0.0:{args.flight_port}")
     print(f" REST API           : http://0.0.0.0:{args.api_port}")
@@ -350,7 +374,7 @@ if __name__ == "__main__":
     logger = Logger(args.log_save_level, args.log_print_level)
     logger.log("Starting WoolMilk Sink Node", LogType.INFO)
 
-    monitor = MonitorNode(f"grpc://0.0.0.0:{args.flight_port}", args.poll_interval, args.max_window)
+    monitor = MonitorNode(f"grpc://0.0.0.0:{args.flight_port}", args.poll_interval, args.max_window, args.max_log_size)
 
     try:
         flight_thread = threading.Thread(target=lambda: monitor.serve, daemon=True)

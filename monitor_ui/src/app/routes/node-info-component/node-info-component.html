@@ -48,7 +48,7 @@
           <span>Forward Urls:</span>
           <div class="d-block">
             @for (url of nodeInfo.forward_urls; track $index) {
-              <span>{{ url }}</span>
+              <a [routerLink]="['/','nodes', url ]" class="d-block">{{ url }}</a>
             }
           </div>
         </div>
@@ -66,5 +66,13 @@
       </app-metrics-table-component>
     }
   }
+
+  @if (logsSub$| async; as logs) {
+    <div class="mt-5 d-flex justify-content-center">
+    <app-logs-area-component [logs]="logs"></app-logs-area-component>
+    </div>
+  }
+
+
 
 }

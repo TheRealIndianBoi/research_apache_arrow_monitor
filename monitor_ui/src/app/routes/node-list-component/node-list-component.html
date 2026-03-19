@@ -50,7 +50,7 @@
             <td>
               @if (node.forward_urls.length != 0){
                 @for (forward of node.forward_urls; track $index) {
-                  <a [routerLink]="['nodes', forward]">{{ forward }}</a>
+                  <a [routerLink]="['nodes', forward]" class="d-block">{{ forward }}</a>
                 }
               } @else {
                 <span>---</span>

@@ -35,8 +35,8 @@ export class MetricsGraphComponent {
   groupAfterType(values: NodeMetric[]): MetricGroupByType[] {
     let metrics: Map<NodeMetricType, Map<string, MetricGroup[]>> = new Map();
     values.map(value => {
-      let type_list: Map<string, MetricGroup[]> = metrics.get(value.type) ?? new Map();
-      let address_list: MetricGroup[] = type_list.get(value.address) ?? [];
+      let type_list: Map<string, MetricGroup[]> = metrics.get(value.metric_type) ?? new Map();
+      let address_list: MetricGroup[] = type_list.get(value.client_url) ?? [];
 
       address_list.push({
         timestamp: value.timestamp,
@@ -53,17 +53,17 @@ export class MetricsGraphComponent {
         return new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
       });
 
-      type_list.set(value.address, address_list);
-      metrics.set(value.type, type_list);
+      type_list.set(value.client_url, address_list);
+      metrics.set(value.metric_type, type_list);
     });
 
     const result: MetricGroupByType[] = [];
-    for (const [type, type_map] of metrics) {
+    for (const [metric_type, type_map] of metrics) {
       const list_values: MetricGroupByAddress[] = [];
-      for (const [address, value] of type_map) {
-        list_values.push({address, value});
+      for (const [client_url, value] of type_map) {
+        list_values.push({client_url, value});
       }
-      result.push({type, value: list_values});
+      result.push({metric_type, value: list_values});
     }
 
     return result;

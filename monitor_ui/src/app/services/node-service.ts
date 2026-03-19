@@ -10,6 +10,7 @@ export class NodeService {
   private readonly monitorUrl = 'http://localhost:7998';
   private readonly healthPollTime = 5000;
   private readonly metricPollTime = 5000;
+  private readonly logsPollTime = 5000;
 
   constructor(private readonly http: HttpClient) {}
 
@@ -51,6 +52,17 @@ export class NodeService {
       switchMap(() =>
         this.http.get<NodeMetric[]>(
           `${this.monitorUrl}/nodes/${url}/metrics`
+        )
+      ),
+      shareReplay({ bufferSize: 1, refCount: true })
+    );
+  }
+
+  getNodeLogs(url: string): Observable<string[]> {
+    return timer(0, this.logsPollTime).pipe(
+      switchMap(() =>
+        this.http.get<string[]>(
+          `${this.monitorUrl}/nodes/${url}/logs`
         )
       ),
       shareReplay({ bufferSize: 1, refCount: true })

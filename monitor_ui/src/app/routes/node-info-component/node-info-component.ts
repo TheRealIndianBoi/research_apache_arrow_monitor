@@ -4,10 +4,11 @@ import {NodeService} from '../../services/node-service';
 import {AlertService} from '../../services/alert-service';
 import {AsyncPipe, NgClass} from '@angular/common';
 import {ErrorSiteComponent} from '../../shared/error-site-component/error-site-component';
-import {ActivatedRoute} from '@angular/router';
+import {ActivatedRoute, RouterLink} from '@angular/router';
 import {map, Observable} from 'rxjs';
 import {MetricsGraphComponent} from '../../shared/metrics-graph-component/metrics-graph-component';
 import {MetricsTableComponent} from '../../shared/metrics-table-component/metrics-table-component';
+import {LogsAreaComponent} from '../../shared/logs-area-component/logs-area-component';
 
 @Component({
   selector: 'app-node-info-component',
@@ -16,7 +17,9 @@ import {MetricsTableComponent} from '../../shared/metrics-table-component/metric
     ErrorSiteComponent,
     MetricsGraphComponent,
     AsyncPipe,
-    MetricsTableComponent
+    MetricsTableComponent,
+    LogsAreaComponent,
+    RouterLink
   ],
   templateUrl: './node-info-component.html',
   styleUrl: './node-info-component.scss',
@@ -36,10 +39,11 @@ export class NodeInfoComponent implements OnInit, OnDestroy {
   private infoSub?: { unsubscribe: () => void };
 
   metricSub$!: Observable<NodeMetric[]>;
+  logsSub$!: Observable<string[]>;
 
 
   constructor(private readonly nodeService: NodeService,
-              private route: ActivatedRoute,
+              private readonly route: ActivatedRoute,
               private readonly alertService: AlertService) {}
 
 
@@ -58,6 +62,7 @@ export class NodeInfoComponent implements OnInit, OnDestroy {
 
 
     this.metricSub$ = this.nodeService.getNodeMetric(this.nodeId);
+    this.logsSub$ = this.nodeService.getNodeLogs(this.nodeId);
 
   }
 

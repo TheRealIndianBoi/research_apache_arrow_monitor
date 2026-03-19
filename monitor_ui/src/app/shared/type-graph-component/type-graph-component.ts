@@ -33,7 +33,7 @@ export class TypeGraphComponent implements AfterViewInit, OnDestroy {
     const currentField = this.field();
 
     return this.values().map(addrObj => ({
-      label: addrObj.address,
+      label: addrObj.client_url,
       data: addrObj.value.map(m => ({
         x: new Date(m.timestamp).getTime(),
         y: (m as any)[currentField] as number

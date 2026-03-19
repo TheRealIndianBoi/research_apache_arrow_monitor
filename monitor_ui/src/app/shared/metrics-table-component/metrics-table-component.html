@@ -20,8 +20,8 @@
       @for (m of metrics(); track $index) {
         <tr>
           <td>{{ m.timestamp }}</td>
-          <td>{{ m.address }}</td>
-          <td>{{ m.type }}</td>
+          <td>{{ m.client_url }}</td>
+          <td>{{ m.metric_type }}</td>
           <td>{{ m.total_duration_ns }}</td>
           <td>{{ m.avg_duration_ns }}</td>
           <td>{{ m.total_bytes }}</td>

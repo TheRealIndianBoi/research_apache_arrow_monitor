@@ -4,11 +4,11 @@
   </div>
 } @else {
   <div class="row flex-wrap px-4 gx-4 gy-3 mb-3">
-    @for (groupByType of groupedByType(); track groupByType.type) {
+    @for (groupByType of groupedByType(); track groupByType.metric_type) {
       <div class="col-6 d-block text-center">
-        <h5>Graph: {{groupByType.type}}</h5>
+        <h5>Graph: {{groupByType.metric_type}}</h5>
         <app-type-graph-component
-          [type]="groupByType.type"
+          [type]="groupByType.metric_type"
           [field]="selectedField()"
           [values]="groupByType.value">
         </app-type-graph-component>
